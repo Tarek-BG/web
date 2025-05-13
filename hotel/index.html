@@ -82,7 +82,8 @@ same</a>
               <!--<iframe  width="1250" height="1409" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQwvBf7cUyNjlaQtfQSqJSdsk4JdipRVRBN-YT7aulgJTjlKUU6fEAgFb0MjcWvqJsRf6QXwl0uV-Fs/pubhtml?gid=394233348&single=true"></iframe>-->
     <a  class="w3-bar-item w3-button" onclick="openWinsaisie()">Saisie</a>
     <!-- a href="saisiemodal.html" class="w3-bar-item w3-button">Saisie Modal</a -->
-    <a href="https://script.google.com/macros/s/AKfycbxotxMiodGBaYi_VH846qNrininv3ITQsqVvIGhrVML/dev" class="w3-bar-item w3-button">Saisie Modal</a>
+    <!-- a href="https://script.google.com/macros/s/AKfycbxotxMiodGBaYi_VH846qNrininv3ITQsqVvIGhrVML/dev" class="w3-bar-item w3-button">Saisie Modal</a -->
+    <a  class="w3-bar-item w3-button" onclick="openWinsaisieModal()">Saisie Modal</a>
   </div>
   <div class="w3-dropdown-click">
     <button class="w3-button" onclick="myDropFunc()">
@@ -213,7 +214,9 @@ let myWindowSS;
 function openWinsaisie() {
   myWindowSS = window.open("saisie.html", "", "toolbar=no,scrollbars=no,resizable=no,top=0,left=0,width=250,height=400");
 }
-
+function openWinsaisieModal() {
+  myWindowSS = window.open("https://script.google.com/macros/s/AKfycbxotxMiodGBaYi_VH846qNrininv3ITQsqVvIGhrVML/dev", "", "toolbar=no,scrollbars=no,resizable=no,top=0,left=0,width=250,height=400");
+}
 
 
 
