@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finger Counter - PyScript</title>
-    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
-    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <title>Hand Finger Counter - MediaPipe</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -27,30 +25,70 @@
             padding: 30px;
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            max-width: 800px;
+            max-width: 900px;
+            width: 100%;
         }
-        #videoCanvas {
+        .video-container {
+            position: relative;
+            display: inline-block;
+            margin: 20px auto;
+        }
+        #videoElement {
+            display: none;
+        }
+        #canvasElement {
             border: 3px solid #667eea;
             border-radius: 10px;
             max-width: 100%;
             display: block;
-            margin: 20px auto;
+            margin: 0 auto;
+            background: #000;
+        }
+        .info-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .info-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+            font-size: 16px;
+        }
+        .info-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #764ba2;
         }
         #fingerCount {
-            font-size: 48px;
-            font-weight: bold;
-            color: #667eea;
-            text-align: center;
-            margin: 20px 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            border-radius: 10px;
+            font-size: 72px;
         }
         #status {
             text-align: center;
             color: #666;
             margin: 10px 0;
             font-size: 14px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+        .status-loading {
+            color: #ff9800 !important;
+            background: #fff3e0 !important;
+        }
+        .status-ready {
+            color: #4caf50 !important;
+            background: #e8f5e9 !important;
+        }
+        .status-error {
+            color: #f44336 !important;
+            background: #ffebee !important;
         }
         button {
             background: #667eea;
@@ -63,7 +101,7 @@
             margin: 10px;
             transition: all 0.3s;
         }
-        button:hover {
+        button:hover:not(:disabled) {
             background: #764ba2;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -79,211 +117,265 @@
             gap: 10px;
             flex-wrap: wrap;
         }
+        .hand-indicator {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
     <h1>✋ Hand Finger Counter</h1>
     
     <div class="container">
-        <div id="status">Initializing...</div>
+        <div id="status" class="status-loading">Loading MediaPipe...</div>
         
-        <canvas id="videoCanvas" width="640" height="480"></canvas>
+        <div class="video-container">
+            <video id="videoElement" width="640" height="480" autoplay playsinline></video>
+            <canvas id="canvasElement" width="640" height="480"></canvas>
+        </div>
         
-        <div id="fingerCount">-- Fingers</div>
+        <div class="info-panel">
+            <div class="info-card">
+                <h3>👆 Fingers Count</h3>
+                <div id="fingerCount" class="value">--</div>
+                <div id="handType" class="hand-indicator">--</div>
+            </div>
+            <div class="info-card">
+                <h3>🖐️ Hands Detected</h3>
+                <div id="handsCount" class="value">0</div>
+            </div>
+            <div class="info-card">
+                <h3>⚡ FPS</h3>
+                <div id="fps" class="value">--</div>
+            </div>
+        </div>
         
         <div class="button-group">
-            <button id="startBtn" onclick="startCamera()">Start Camera</button>
-            <button id="stopBtn" onclick="stopCamera()" disabled>Stop Camera</button>
+            <button id="startBtn">Start Camera</button>
+            <button id="stopBtn" disabled>Stop Camera</button>
         </div>
     </div>
 
-    <script type="py" src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js" config='{"packages": ["numpy"]}'>
-        from js import (
-            document, console, window, navigator, 
-            MediaStream, requestAnimationFrame, Image
-        )
-        from pyodide.ffi import create_proxy
-        import asyncio
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <script>
+        const videoElement = document.getElementById('videoElement');
+        const canvasElement = document.getElementById('canvasElement');
+        const canvasCtx = canvasElement.getContext('2d');
+        const statusDiv = document.getElementById('status');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
         
-        # Global variables
-        video_stream = None
-        animation_frame = None
-        canvas = None
-        ctx = None
-        video_element = None
-        mediapipe_hands = None
+        let hands;
+        let camera;
+        let lastTime = Date.now();
+        let frameCount = 0;
         
-        async def setup_mediapipe():
-            """Load MediaPipe Hands from CDN"""
-            global mediapipe_hands
-            
-            # Create script element for MediaPipe
-            script = document.createElement('script')
-            script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js'
-            script.crossOrigin = 'anonymous'
-            
-            # Wait for script to load
-            load_promise = window.Promise.new(lambda resolve, reject: (
-                setattr(script, 'onload', lambda: resolve(True)),
-                setattr(script, 'onerror', lambda: reject('Failed to load MediaPipe'))
-            ))
-            
-            document.head.appendChild(script)
-            await asyncio.sleep(1)  # Give it time to load
-            
-            return True
+        // Finger tip and base landmark indices
+        const FINGER_TIPS = [4, 8, 12, 16, 20];  // Thumb, Index, Middle, Ring, Pinky
+        const FINGER_BASES = [2, 5, 9, 13, 17];
+        const FINGER_PIPS = [3, 6, 10, 14, 18];
         
-        def count_fingers(hand_landmarks):
-            """Count extended fingers based on landmark positions"""
-            if not hand_landmarks:
-                return 0
+        function countFingers(landmarks, handedness) {
+            let count = 0;
+            const isRightHand = handedness === 'Right';
             
-            # Finger tip and pip landmark indices
-            # Thumb: 4, Index: 8, Middle: 12, Ring: 16, Pinky: 20
-            finger_tips = [4, 8, 12, 16, 20]
-            finger_pips = [3, 6, 10, 14, 18]
+            // Thumb detection (different logic based on hand)
+            const thumbTip = landmarks[FINGER_TIPS[0]];
+            const thumbIP = landmarks[FINGER_PIPS[0]];
             
-            count = 0
-            landmarks = hand_landmarks.landmark
+            if (isRightHand) {
+                if (thumbTip.x < thumbIP.x) count++;
+            } else {
+                if (thumbTip.x > thumbIP.x) count++;
+            }
             
-            # Count thumb (different logic - check x coordinate)
-            if landmarks[finger_tips[0]].x > landmarks[finger_pips[0]].x:
-                count += 1
-            
-            # Count other fingers (check y coordinate)
-            for i in range(1, 5):
-                if landmarks[finger_tips[i]].y < landmarks[finger_pips[i]].y:
-                    count += 1
-            
-            return count
-        
-        def draw_hand_landmarks(landmarks):
-            """Draw hand landmarks and connections on canvas"""
-            if not landmarks or not ctx:
-                return
-            
-            width = canvas.width
-            height = canvas.height
-            
-            # Draw connections
-            connections = [
-                [0,1],[1,2],[2,3],[3,4],  # Thumb
-                [0,5],[5,6],[6,7],[7,8],  # Index
-                [0,9],[9,10],[10,11],[11,12],  # Middle
-                [0,13],[13,14],[14,15],[15,16],  # Ring
-                [0,17],[17,18],[18,19],[19,20],  # Pinky
-                [5,9],[9,13],[13,17]  # Palm
-            ]
-            
-            ctx.strokeStyle = '#00FF00'
-            ctx.lineWidth = 2
-            
-            for conn in connections:
-                start = landmarks.landmark[conn[0]]
-                end = landmarks.landmark[conn[1]]
+            // Other four fingers (check if tip is above PIP joint)
+            for (let i = 1; i < 5; i++) {
+                const tip = landmarks[FINGER_TIPS[i]];
+                const pip = landmarks[FINGER_PIPS[i]];
                 
-                ctx.beginPath()
-                ctx.moveTo(start.x * width, start.y * height)
-                ctx.lineTo(end.x * width, end.y * height)
-                ctx.stroke()
-            
-            # Draw landmarks
-            ctx.fillStyle = '#FF0000'
-            for landmark in landmarks.landmark:
-                x = landmark.x * width
-                y = landmark.y * height
-                ctx.beginPath()
-                ctx.arc(x, y, 5, 0, 2 * 3.14159)
-                ctx.fill()
-        
-        def process_frame():
-            """Process video frame and detect hands"""
-            global animation_frame
-            
-            if not video_element or video_element.readyState != 4:
-                animation_frame = requestAnimationFrame(create_proxy(process_frame))
-                return
-            
-            # Draw video frame to canvas
-            ctx.drawImage(video_element, 0, 0, canvas.width, canvas.height)
-            
-            # Simple finger counting without MediaPipe for demo
-            # In production, you'd integrate actual MediaPipe Hands
-            document.getElementById('fingerCount').innerHTML = '✋ Show your hand'
-            document.getElementById('status').innerHTML = 'Camera active - Simplified version (MediaPipe integration requires full setup)'
-            
-            animation_frame = requestAnimationFrame(create_proxy(process_frame))
-        
-        async def init_camera():
-            """Initialize camera and start processing"""
-            global video_stream, canvas, ctx, video_element
-            
-            try:
-                # Get canvas and context
-                canvas = document.getElementById('videoCanvas')
-                ctx = canvas.getContext('2d')
-                
-                # Create video element
-                video_element = document.createElement('video')
-                video_element.setAttribute('playsinline', '')
-                video_element.width = 640
-                video_element.height = 480
-                
-                # Get user media
-                constraints = {
-                    'video': {
-                        'width': 640,
-                        'height': 480,
-                        'facingMode': 'user'
-                    }
+                if (tip.y < pip.y) {
+                    count++;
                 }
-                
-                stream = await navigator.mediaDevices.getUserMedia(constraints)
-                video_element.srcObject = stream
-                video_stream = stream
-                
-                # Play video
-                await video_element.play()
-                
-                # Update UI
-                document.getElementById('status').innerHTML = 'Camera started!'
-                document.getElementById('startBtn').disabled = True
-                document.getElementById('stopBtn').disabled = False
-                
-                # Start processing
-                process_frame()
-                
-            except Exception as e:
-                console.log(f'Error: {e}')
-                document.getElementById('status').innerHTML = f'Error: {e}'
+            }
+            
+            return count;
+        }
         
-        def stop_camera_stream():
-            """Stop camera stream"""
-            global video_stream, animation_frame
+        function updateFPS() {
+            frameCount++;
+            const currentTime = Date.now();
+            const elapsed = currentTime - lastTime;
             
-            if video_stream:
-                for track in video_stream.getTracks():
-                    track.stop()
-                video_stream = None
-            
-            if animation_frame:
-                window.cancelAnimationFrame(animation_frame)
-                animation_frame = None
-            
-            if ctx and canvas:
-                ctx.clearRect(0, 0, canvas.width, canvas.height)
-            
-            document.getElementById('status').innerHTML = 'Camera stopped'
-            document.getElementById('fingerCount').innerHTML = '-- Fingers'
-            document.getElementById('startBtn').disabled = False
-            document.getElementById('stopBtn').disabled = True
+            if (elapsed >= 1000) {
+                const fps = Math.round((frameCount * 1000) / elapsed);
+                document.getElementById('fps').textContent = fps;
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+        }
         
-        # Make functions available to JavaScript
-        window.startCamera = lambda: asyncio.ensure_future(init_camera())
-        window.stopCamera = stop_camera_stream
+        function onResults(results) {
+            // Clear canvas
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            
+            // Draw video frame
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+            
+            // Update hands count
+            const handsDetected = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
+            document.getElementById('handsCount').textContent = handsDetected;
+            
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                // Process first hand detected
+                const landmarks = results.multiHandLandmarks[0];
+                const handedness = results.multiHandedness[0].label;
+                
+                // Draw hand landmarks
+                drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {
+                    color: '#00FF00',
+                    lineWidth: 3
+                });
+                drawLandmarks(canvasCtx, landmarks, {
+                    color: '#FF0000',
+                    lineWidth: 1,
+                    radius: 5
+                });
+                
+                // Count fingers
+                const fingerCount = countFingers(landmarks, handedness);
+                document.getElementById('fingerCount').textContent = fingerCount;
+                document.getElementById('handType').textContent = `${handedness} Hand`;
+                
+                // If multiple hands, show total
+                if (handsDetected > 1) {
+                    let totalFingers = fingerCount;
+                    for (let i = 1; i < results.multiHandLandmarks.length; i++) {
+                        const otherLandmarks = results.multiHandLandmarks[i];
+                        const otherHandedness = results.multiHandedness[i].label;
+                        
+                        // Draw other hands
+                        drawConnectors(canvasCtx, otherLandmarks, HAND_CONNECTIONS, {
+                            color: '#00FFFF',
+                            lineWidth: 3
+                        });
+                        drawLandmarks(canvasCtx, otherLandmarks, {
+                            color: '#FF00FF',
+                            lineWidth: 1,
+                            radius: 5
+                        });
+                        
+                        totalFingers += countFingers(otherLandmarks, otherHandedness);
+                    }
+                    document.getElementById('fingerCount').textContent = totalFingers;
+                    document.getElementById('handType').textContent = 'Both Hands';
+                }
+            } else {
+                document.getElementById('fingerCount').textContent = '--';
+                document.getElementById('handType').textContent = 'No hand detected';
+            }
+            
+            canvasCtx.restore();
+            updateFPS();
+        }
         
-        # Initialize
-        document.getElementById('status').innerHTML = 'Ready! Click Start Camera'
+        async function initializeMediaPipe() {
+            try {
+                // Initialize MediaPipe Hands
+                hands = new Hands({
+                    locateFile: (file) => {
+                        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                    }
+                });
+                
+                hands.setOptions({
+                    maxNumHands: 2,
+                    modelComplexity: 1,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5
+                });
+                
+                hands.onResults(onResults);
+                
+                statusDiv.textContent = 'MediaPipe loaded! Click Start Camera';
+                statusDiv.className = 'status-ready';
+                startBtn.disabled = false;
+                
+            } catch (error) {
+                console.error('Error initializing MediaPipe:', error);
+                statusDiv.textContent = 'Error loading MediaPipe: ' + error.message;
+                statusDiv.className = 'status-error';
+            }
+        }
+        
+        async function startCamera() {
+            try {
+                statusDiv.textContent = 'Starting camera...';
+                statusDiv.className = 'status-loading';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: 'user' },
+                    audio: false
+                });
+                
+                videoElement.srcObject = stream;
+                
+                camera = new Camera(videoElement, {
+                    onFrame: async () => {
+                        await hands.send({ image: videoElement });
+                    },
+                    width: 640,
+                    height: 480
+                });
+                
+                await camera.start();
+                
+                statusDiv.textContent = 'Camera active - Show your hand!';
+                statusDiv.className = 'status-ready';
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                
+            } catch (error) {
+                console.error('Error starting camera:', error);
+                statusDiv.textContent = 'Error: ' + error.message;
+                statusDiv.className = 'status-error';
+            }
+        }
+        
+        function stopCamera() {
+            if (camera) {
+                camera.stop();
+            }
+            
+            if (videoElement.srcObject) {
+                videoElement.srcObject.getTracks().forEach(track => track.stop());
+                videoElement.srcObject = null;
+            }
+            
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            
+            document.getElementById('fingerCount').textContent = '--';
+            document.getElementById('handType').textContent = '--';
+            document.getElementById('handsCount').textContent = '0';
+            document.getElementById('fps').textContent = '--';
+            
+            statusDiv.textContent = 'Camera stopped';
+            statusDiv.className = '';
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        }
+        
+        // Event listeners
+        startBtn.addEventListener('click', startCamera);
+        stopBtn.addEventListener('click', stopCamera);
+        
+        // Initialize on page load
+        window.addEventListener('load', initializeMediaPipe);
     </script>
 </body>
 </html>
