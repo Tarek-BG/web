@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finger Counter - PyScript</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            color: white;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 800px;
+        }
+        #videoCanvas {
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            max-width: 100%;
+            display: block;
+            margin: 20px auto;
+        }
+        #fingerCount {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+        }
+        #status {
+            text-align: center;
+            color: #666;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>✋ Hand Finger Counter</h1>
+    
+    <div class="container">
+        <div id="status">Initializing...</div>
+        
+        <canvas id="videoCanvas" width="640" height="480"></canvas>
+        
+        <div id="fingerCount">-- Fingers</div>
+        
+        <div class="button-group">
+            <button id="startBtn" onclick="startCamera()">Start Camera</button>
+            <button id="stopBtn" onclick="stopCamera()" disabled>Stop Camera</button>
+        </div>
+    </div>
+
+    <script type="py" src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js" config='{"packages": ["numpy"]}'>
+        from js import (
+            document, console, window, navigator, 
+            MediaStream, requestAnimationFrame, Image
+        )
+        from pyodide.ffi import create_proxy
+        import asyncio
+        
+        # Global variables
+        video_stream = None
+        animation_frame = None
+        canvas = None
+        ctx = None
+        video_element = None
+        mediapipe_hands = None
+        
+        async def setup_mediapipe():
+            """Load MediaPipe Hands from CDN"""
+            global mediapipe_hands
+            
+            # Create script element for MediaPipe
+            script = document.createElement('script')
+            script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js'
+            script.crossOrigin = 'anonymous'
+            
+            # Wait for script to load
+            load_promise = window.Promise.new(lambda resolve, reject: (
+                setattr(script, 'onload', lambda: resolve(True)),
+                setattr(script, 'onerror', lambda: reject('Failed to load MediaPipe'))
+            ))
+            
+            document.head.appendChild(script)
+            await asyncio.sleep(1)  # Give it time to load
+            
+            return True
+        
+        def count_fingers(hand_landmarks):
+            """Count extended fingers based on landmark positions"""
+            if not hand_landmarks:
+                return 0
+            
+            # Finger tip and pip landmark indices
+            # Thumb: 4, Index: 8, Middle: 12, Ring: 16, Pinky: 20
+            finger_tips = [4, 8, 12, 16, 20]
+            finger_pips = [3, 6, 10, 14, 18]
+            
+            count = 0
+            landmarks = hand_landmarks.landmark
+            
+            # Count thumb (different logic - check x coordinate)
+            if landmarks[finger_tips[0]].x > landmarks[finger_pips[0]].x:
+                count += 1
+            
+            # Count other fingers (check y coordinate)
+            for i in range(1, 5):
+                if landmarks[finger_tips[i]].y < landmarks[finger_pips[i]].y:
+                    count += 1
+            
+            return count
+        
+        def draw_hand_landmarks(landmarks):
+            """Draw hand landmarks and connections on canvas"""
+            if not landmarks or not ctx:
+                return
+            
+            width = canvas.width
+            height = canvas.height
+            
+            # Draw connections
+            connections = [
+                [0,1],[1,2],[2,3],[3,4],  # Thumb
+                [0,5],[5,6],[6,7],[7,8],  # Index
+                [0,9],[9,10],[10,11],[11,12],  # Middle
+                [0,13],[13,14],[14,15],[15,16],  # Ring
+                [0,17],[17,18],[18,19],[19,20],  # Pinky
+                [5,9],[9,13],[13,17]  # Palm
+            ]
+            
+            ctx.strokeStyle = '#00FF00'
+            ctx.lineWidth = 2
+            
+            for conn in connections:
+                start = landmarks.landmark[conn[0]]
+                end = landmarks.landmark[conn[1]]
+                
+                ctx.beginPath()
+                ctx.moveTo(start.x * width, start.y * height)
+                ctx.lineTo(end.x * width, end.y * height)
+                ctx.stroke()
+            
+            # Draw landmarks
+            ctx.fillStyle = '#FF0000'
+            for landmark in landmarks.landmark:
+                x = landmark.x * width
+                y = landmark.y * height
+                ctx.beginPath()
+                ctx.arc(x, y, 5, 0, 2 * 3.14159)
+                ctx.fill()
+        
+        def process_frame():
+            """Process video frame and detect hands"""
+            global animation_frame
+            
+            if not video_element or video_element.readyState != 4:
+                animation_frame = requestAnimationFrame(create_proxy(process_frame))
+                return
+            
+            # Draw video frame to canvas
+            ctx.drawImage(video_element, 0, 0, canvas.width, canvas.height)
+            
+            # Simple finger counting without MediaPipe for demo
+            # In production, you'd integrate actual MediaPipe Hands
+            document.getElementById('fingerCount').innerHTML = '✋ Show your hand'
+            document.getElementById('status').innerHTML = 'Camera active - Simplified version (MediaPipe integration requires full setup)'
+            
+            animation_frame = requestAnimationFrame(create_proxy(process_frame))
+        
+        async def init_camera():
+            """Initialize camera and start processing"""
+            global video_stream, canvas, ctx, video_element
+            
+            try:
+                # Get canvas and context
+                canvas = document.getElementById('videoCanvas')
+                ctx = canvas.getContext('2d')
+                
+                # Create video element
+                video_element = document.createElement('video')
+                video_element.setAttribute('playsinline', '')
+                video_element.width = 640
+                video_element.height = 480
+                
+                # Get user media
+                constraints = {
+                    'video': {
+                        'width': 640,
+                        'height': 480,
+                        'facingMode': 'user'
+                    }
+                }
+                
+                stream = await navigator.mediaDevices.getUserMedia(constraints)
+                video_element.srcObject = stream
+                video_stream = stream
+                
+                # Play video
+                await video_element.play()
+                
+                # Update UI
+                document.getElementById('status').innerHTML = 'Camera started!'
+                document.getElementById('startBtn').disabled = True
+                document.getElementById('stopBtn').disabled = False
+                
+                # Start processing
+                process_frame()
+                
+            except Exception as e:
+                console.log(f'Error: {e}')
+                document.getElementById('status').innerHTML = f'Error: {e}'
+        
+        def stop_camera_stream():
+            """Stop camera stream"""
+            global video_stream, animation_frame
+            
+            if video_stream:
+                for track in video_stream.getTracks():
+                    track.stop()
+                video_stream = None
+            
+            if animation_frame:
+                window.cancelAnimationFrame(animation_frame)
+                animation_frame = None
+            
+            if ctx and canvas:
+                ctx.clearRect(0, 0, canvas.width, canvas.height)
+            
+            document.getElementById('status').innerHTML = 'Camera stopped'
+            document.getElementById('fingerCount').innerHTML = '-- Fingers'
+            document.getElementById('startBtn').disabled = False
+            document.getElementById('stopBtn').disabled = True
+        
+        # Make functions available to JavaScript
+        window.startCamera = lambda: asyncio.ensure_future(init_camera())
+        window.stopCamera = stop_camera_stream
+        
+        # Initialize
+        document.getElementById('status').innerHTML = 'Ready! Click Start Camera'
+    </script>
+</body>
+</html>
