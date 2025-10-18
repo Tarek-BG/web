@@ -1,4 +1,9 @@
 #EXTM3U
+#EXTALB:Album Title (2009)
+#EXTART:Various
+#EXTGENRE:Jazz Fusion
+#EXTINF:234,Exploding Fish : Audible Underwater
+/MP3/beating_that_thing.mp3
 #EXTINF:-1 tvg-logo="https://i.ibb.co/kckRLh5/bfm.png" group-title="1. |FR|🇫🇷 INFORMATION",BFM TV
 https://ncdn-live-bfm.pfd.sfr.net/shls/LIVE$BFM_TV/index.m3u8?start=LIVE&end=END
 #EXTINF:-1 tvg-logo="https://i.ibb.co/qY6w8ds/cnews.png",CNEWS
