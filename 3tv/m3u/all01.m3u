@@ -8,6 +8,8 @@ https://tarek-bg.github.io/web/3tv/MP3/beating_that_thing.mp3
 http://www.vkiss.x/music/stream.php?track_id=5188&format=mp3
 #EXTINF:-1 tvg-logo="https://i.ibb.co/kckRLh5/bfm.png" group-title="1. |FR|🇫🇷 INFORMATION",BFM TV
 https://ncdn-live-bfm.pfd.sfr.net/shls/LIVE$BFM_TV/index.m3u8?start=LIVE&end=END
+#EXTINF:234,Exploding Fish : Audible Underwater
+https://tarek-bg.github.io/web/3tv/MP3/beating_that_thing.mp3
 #EXTINF:-1 tvg-logo="https://i.ibb.co/qY6w8ds/cnews.png",CNEWS
 https://hls-m015-live-aka-canalplus.akamaized.net/live/disk/cnews-clair-hd/hls-v3-hd-clair/cnews-clair-hd.m3u8
 #EXTINF:-1 tvg-logo="https://i.ibb.co/Zfcrrr1/lci.png",LCI
