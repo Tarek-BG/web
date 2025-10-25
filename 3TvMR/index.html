@@ -1,0 +1,63 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+<h1>Responsive IPTV</h1>
+
+<div class="gallery">
+ <a  href='https://tarek-bg.github.io/web/3tv/' alt="icoTV"  class="gallery-item" ><img src="img/icoTV.jpg" width="600" height="400"></a>
+  <img src="img/icoRADIO.jpg"  alt="icoRADIO"  class="gallery-item" onclick="openModal('modal2', 'icoRADIO')"  width="600" height="400">
+  <img src="img/icoMUSIC.jpg"  alt="icoMUSIC"  class="gallery-item" onclick="openModal('modal3', 'icoMUSIC')"  width="600" height="400">
+  <img src="img/icoCONFIG.jpg" alt="icoCONFIG" class="gallery-item" onclick="openModal('modal4', 'icoCONFIG')" width="600" height="400">
+</div>
+
+<div id="modal1" class="modal">
+  <span class="close" onclick="closeModal('modal1')">&times;</span>
+  <img src="img/icoTV.jpg" alt="icoTV" class="modal-content" >
+  <div class="caption"></div>
+</div>
+
+<div id="modal2" class="modal">
+  <span class="close" onclick="closeModal('modal2')">&times;</span>
+  <img src="img/icoRADIO.jpg" alt="icoRADIO" class="modal-content">
+  <div class="caption"></div>
+</div>
+
+<div id="modal3" class="modal">
+  <span class="close" onclick="closeModal('modal3')">&times;</span>
+  <img src="img/icoMUSIC.jpg" alt="icoMUSIC" class="modal-content">
+  <div class="caption"></div>
+</div>
+
+<div id="modal4" class="modal">
+  <span class="close" onclick="closeModal('modal4')">&times;</span>
+  <img src="img/icoCONFIG.jpg" alt="icoCONFIG" class="modal-content">
+  <div class="caption"></div>
+</div>
+
+<script>
+function openModal(modalId, caption) {
+  let modal = document.getElementById(modalId);
+  modal.style.display = "flex";
+  modal.classList.add("show");
+  let message = modal.querySelector(".caption");
+  message.innerText = caption;
+  
+}
+
+function closeModal(modalId) {
+  let modal = document.getElementById(modalId);
+  modal.classList.remove("show");
+  setTimeout(function () {
+    modal.style.display = "none";
+    modal.querySelector(".caption").innerText = "";
+  }, 300);
+}
+</script>
+
+</body>
+</html>
