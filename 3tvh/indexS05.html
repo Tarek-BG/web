@@ -1,0 +1,651 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>M3U Playlist Editor - Complete Fields</title>
+    <link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/jquery.ui/1.11.4/themes/redmond/jquery-ui.min.css">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://rawgit.com/free-jqgrid/jqGrid/master/css/ui.jqgrid.css">
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .control-buttons { margin: 15px 5px; }
+        .control-buttons button { margin-right: 10px; }
+        #status-message { margin: 10px 5px; padding: 10px; display: none; }
+        .channel-logo { 
+            max-width: 60px; 
+            max-height: 40px; 
+            vertical-align: middle;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            padding: 2px;
+        }
+        .channel-logo:hover {
+            border-color: #337ab7;
+            box-shadow: 0 0 5px rgba(51, 122, 183, 0.5);
+        }
+        .empty-field { color: #999; font-style: italic; }
+        .ui-jqgrid tr.jqgrow td { cursor: default !important; }
+        .filter-hint {
+            background: #d9edf7;
+            border: 1px solid #bce8f1;
+            color: #31708f;
+            padding: 10px;
+            margin: 10px 5px;
+            border-radius: 4px;
+        }
+        #fileInput { display: none; }
+        .stream-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+        .stream-modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 0;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 1200px;
+            border-radius: 5px;
+        }
+        .stream-modal-header {
+            padding: 15px;
+            background-color: #337ab7;
+            color: white;
+            border-radius: 5px 5px 0 0;
+        }
+        .stream-modal-header h3 { margin: 0; display: inline-block; }
+        .stream-modal-body { padding: 20px; max-height: 80vh; overflow-y: auto; }
+        .stream-close {
+            color: white;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 20px;
+        }
+        .stream-close:hover { color: #ddd; }
+        #streamPlayer { width: 100%; height: 500px; background: #000; }
+        .stream-info { margin-top: 15px; padding: 10px; background: #f5f5f5; border-radius: 3px; }
+        .stream-info p { margin: 5px 0; word-break: break-all; }
+        .ui-search-toolbar select {
+            width: 100%;
+            height: 24px;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery.ui/1.11.4/jquery-ui.min.js"></script>
+    <script src="https://rawgit.com/free-jqgrid/jqGrid/master/js/i18n/grid.locale-en.js"></script>
+    <script>
+        $.jgrid = $.jgrid || {};
+        $.jgrid.no_legacy_api = true;
+    </script>
+    <script src="https://rawgit.com/free-jqgrid/jqGrid/master/js/jquery.jqgrid.src.js"></script>
+    <script>
+        //<![CDATA[
+        var $grid;
+        
+        var sampleData = [
+            {id: "1", duration: "234", title: "Exploding Fish BBC News HD", tvgId: "bbc.uk", tvgName: "BBC News", tvgLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/BBC_News_2019.svg/200px-BBC_News_2019.svg.png", groupTitle: "News", channelId: "bbc001", url: "https://tarek-bg.github.io/web/3tv/MP3/beating_that_thing.mp3", playlist: "", extgrp: "", album: "", artist: "", genre: "", selected: false},
+            {id: "2", duration: "-1", title: "CNN International", tvgId: "cnn.us", tvgName: "CNN", tvgLogo: "https://i.imgur.com/rF3tpbR.jpeg", groupTitle: "News", channelId: "cnn001", url: "http://example.com/cnn", playlist: "", extgrp: "", album: "", artist: "", genre: "", selected: false},
+            {id: "3", duration: "-1", title: "ESPN Sports", tvgId: "7STORIA.it@HD", tvgName: "ESPN", tvgLogo: "https://radio7note.com/img/favicon/android-icon-192x192.png", groupTitle: "Sports", channelId: "espn001", url: "https://stream10.xdevel.com/video2s976543-2104/stream/playlist.m3u8", playlist: "", extgrp: "", album: "", artist: "", genre: "", selected: false},
+            {id: "4", duration: "3600", title: "Discovery Channel", tvgId: "", tvgName: "Discovery", tvgLogo: "", groupTitle: "Documentary", channelId: "", url: "", playlist: "", extgrp: "", album: "", artist: "", genre: "Science", selected: false},
+            {id: "5", duration: "180", title: "Nature Documentary", tvgId: "natgeo.us", tvgName: "National Geographic", tvgLogo: "", groupTitle: "Documentary", channelId: "ng001", url: "http://example.com/natgeo", playlist: "Nature Collection", extgrp: "Documentaries", album: "Planet Earth", artist: "", genre: "Documentary", selected: false}
+        ];
+        
+        function showMessage(message, type) {
+            var $msg = $('#status-message');
+            $msg.removeClass('alert-success alert-danger alert-info')
+                .addClass('alert alert-' + type)
+                .text(message)
+                .fadeIn()
+                .delay(3000)
+                .fadeOut();
+        }
+        
+        function parseM3U(m3uText) {
+            var lines = m3uText.split('\n');
+            var channels = [];
+            var currentChannel = null;
+            var id = 1;
+            var playlistTitle = '';
+            
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i].trim();
+                
+                if (line.startsWith('#PLAYLIST:')) {
+                    playlistTitle = line.substring(10).trim();
+                } else if (line.startsWith('#EXTINF:')) {
+                    currentChannel = { id: id.toString(), playlist: playlistTitle, selected: false };
+                    
+                    var durationMatch = line.match(/#EXTINF:([-\d]+)/);
+                    currentChannel.duration = durationMatch ? durationMatch[1].trim() : '-1';
+                    
+                    var tvgIdMatch = line.match(/tvg-id="([^"]*)"/);
+                    currentChannel.tvgId = tvgIdMatch ? tvgIdMatch[1] : '';
+                    
+                    var tvgNameMatch = line.match(/tvg-name="([^"]*)"/);
+                    currentChannel.tvgName = tvgNameMatch ? tvgNameMatch[1] : '';
+                    
+                    var logoMatch = line.match(/tvg-logo="([^"]*)"/);
+                    currentChannel.tvgLogo = logoMatch ? logoMatch[1] : '';
+                    
+                    var groupMatch = line.match(/group-title="([^"]*)"/);
+                    currentChannel.groupTitle = groupMatch ? groupMatch[1] : '';
+                    
+                    var channelIdMatch = line.match(/channel-id="([^"]*)"/);
+                    currentChannel.channelId = channelIdMatch ? channelIdMatch[1] : '';
+                    
+                    var titleMatch = line.match(/,(.+)$/);
+                    currentChannel.title = titleMatch ? titleMatch[1].trim() : '';
+                    
+                    currentChannel.extgrp = '';
+                    currentChannel.album = '';
+                    currentChannel.artist = '';
+                    currentChannel.genre = '';
+                    
+                    id++;
+                } else if (line.startsWith('#EXTGRP:') && currentChannel) {
+                    currentChannel.extgrp = line.substring(8).trim();
+                } else if (line.startsWith('#EXTALB:') && currentChannel) {
+                    currentChannel.album = line.substring(8).trim();
+                } else if (line.startsWith('#EXTART:') && currentChannel) {
+                    currentChannel.artist = line.substring(8).trim();
+                } else if (line.startsWith('#EXTGENRE:') && currentChannel) {
+                    currentChannel.genre = line.substring(10).trim();
+                } else if (line && !line.startsWith('#') && currentChannel) {
+                    currentChannel.url = line;
+                    channels.push(currentChannel);
+                    currentChannel = null;
+                }
+            }
+            
+            return channels;
+        }
+        
+        function generateM3U(channels) {
+            var m3u = '#EXTM3U\n';
+            
+            if (channels.length > 0 && channels[0].playlist) {
+                m3u += '#PLAYLIST:' + channels[0].playlist + '\n';
+            }
+            
+            for (var i = 0; i < channels.length; i++) {
+                var ch = channels[i];
+                
+                if (ch.extgrp) {
+                    m3u += '#EXTGRP:' + ch.extgrp + '\n';
+                }
+                
+                m3u += '#EXTINF:' + (ch.duration || '-1');
+                
+                if (ch.tvgId) m3u += ' tvg-id="' + ch.tvgId + '"';
+                if (ch.tvgName) m3u += ' tvg-name="' + ch.tvgName + '"';
+                if (ch.tvgLogo) m3u += ' tvg-logo="' + ch.tvgLogo + '"';
+                if (ch.groupTitle) m3u += ' group-title="' + ch.groupTitle + '"';
+                if (ch.channelId) m3u += ' channel-id="' + ch.channelId + '"';
+                
+                m3u += ',' + (ch.title || '') + '\n';
+                
+                if (ch.album) m3u += '#EXTALB:' + ch.album + '\n';
+                if (ch.artist) m3u += '#EXTART:' + ch.artist + '\n';
+                if (ch.genre) m3u += '#EXTGENRE:' + ch.genre + '\n';
+                
+                m3u += (ch.url || '') + '\n';
+            }
+            
+            return m3u;
+        }
+        
+        function buildSelectOptions(data, fieldName) {
+            var uniqueValues = {};
+            
+            for (var i = 0; i < data.length; i++) {
+                var value = data[i][fieldName];
+                if (value && value.toString().trim() !== '') {
+                    uniqueValues[value.toString()] = true;
+                }
+            }
+            
+            var sortedValues = Object.keys(uniqueValues).sort();
+            var options = '<option value="">All</option>';
+            
+            for (var j = 0; j < sortedValues.length; j++) {
+                var val = sortedValues[j];
+                options += '<option value="' + val + '">' + val + '</option>';
+            }
+            
+            var hasEmpty = false;
+            for (var k = 0; k < data.length; k++) {
+                if (!data[k][fieldName] || data[k][fieldName].toString().trim() === '') {
+                    hasEmpty = true;
+                    break;
+                }
+            }
+            if (hasEmpty) {
+                options += '<option value="(empty)">(empty)</option>';
+            }
+            
+            return options;
+        }
+        
+        function updateFilterDropdowns() {
+            var gridData = $grid.jqGrid('getGridParam', 'data');
+            var fieldsWithDropdown = ['title', 'tvgName', 'groupTitle', 'genre', 'extgrp'];
+            
+            for (var i = 0; i < fieldsWithDropdown.length; i++) {
+                var field = fieldsWithDropdown[i];
+                var options = buildSelectOptions(gridData, field);
+                var $select = $('#gs_' + field);
+                if ($select.length) {
+                    var currentVal = $select.val();
+                    $select.html(options);
+                    if (currentVal) {
+                        $select.val(currentVal);
+                    }
+                }
+            }
+        }
+        
+        function loadSampleData() {
+            $grid.jqGrid('clearGridData');
+            $grid.jqGrid('setGridParam', { data: sampleData });
+            $grid.trigger('reloadGrid');
+            setTimeout(function() {
+                updateFilterDropdowns();
+            }, 200);
+            showMessage('Sample data loaded (' + sampleData.length + ' channels)', 'success');
+        }
+        
+        function browseFile() {
+            $('#fileInput').click();
+        }
+        
+        function handleFileSelect(evt) {
+            var file = evt.target.files[0];
+            if (!file) return;
+            
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var m3uData = e.target.result;
+                var channels = parseM3U(m3uData);
+                
+                $grid.jqGrid('clearGridData');
+                $grid.jqGrid('setGridParam', { data: channels });
+                $grid.trigger('reloadGrid');
+                setTimeout(function() {
+                    updateFilterDropdowns();
+                }, 200);
+                showMessage('M3U file loaded: ' + file.name + ' (' + channels.length + ' channels)', 'success');
+            };
+            reader.readAsText(file);
+        }
+        
+        function saveData() {
+            var gridData = $grid.jqGrid('getGridParam', 'data');
+            var m3uContent = generateM3U(gridData);
+            
+            var blob = new Blob([m3uContent], { type: 'audio/x-mpegurl' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'playlist.m3u';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage('Playlist exported to playlist.m3u', 'info');
+        }
+        
+        function saveAsJSON() {
+            var gridData = $grid.jqGrid('getGridParam', 'data');
+            var jsonString = JSON.stringify(gridData, null, 2);
+            
+            var blob = new Blob([jsonString], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'channels.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage('Data exported to channels.json', 'info');
+        }
+        
+        function openStreamModal(rowid) {
+            var rowData = $grid.jqGrid('getLocalRow', rowid);
+            $('#modalTitle').text(rowData.title || '(no title)');
+            $('#modalGroup').text(rowData.groupTitle || '(no group)');
+            $('#modalUrl').text(rowData.url || '(no URL)');
+            
+            if (rowData.url) {
+                var videoHtml = '<video id="streamPlayer" controls autoplay>' +
+                               '<source src="' + rowData.url + '" type="application/x-mpegURL">' +
+                               'Your browser does not support the video tag or HLS streams.' +
+                               '</video>';
+                $('#streamPlayerContainer').html(videoHtml);
+            } else {
+                $('#streamPlayerContainer').html('<p class="alert alert-warning">No stream URL available</p>');
+            }
+            
+            $('#streamModal').fadeIn();
+        }
+        
+        function closeStreamModal() {
+            $('#streamModal').fadeOut();
+            $('#streamPlayerContainer').html('');
+        }
+        
+        $(document).ready(function () {
+            $grid = $("#list");
+            
+            $grid.jqGrid({
+                data: sampleData,
+                datatype: "local",
+                colNames: ["","Duration", "Title", "TVG-ID", "TVG-Name", "TVG-Logo", "Group", "Channel-ID", "Playlist", "ExtGrp", "Album", "Artist", "Genre", "URL", "Select"],
+                colModel: [
+               { name: "act", template: "actions" ,width:"120",},//tarek
+
+                    { 
+                        name: "duration", 
+                        width: 70, 
+                        editable: true,
+                        formatter: function(v) { return v || '<span class="empty-field">(empty)</span>'; },
+                        search: false
+                    },
+                    { 
+                        name: "title", 
+                        width: 180, 
+                        editable: true,
+                        editrules: {required: true},
+                        formatter: function(v) { return v || '<span class="empty-field">(empty)</span>'; },
+                        search: true,
+                        stype: 'select',
+                        searchoptions: {
+                            sopt: ['eq'],
+                            value: ''
+                        }
+                    },
+                    { 
+                        name: "tvgId", 
+                        width: 100, 
+                        editable: true,
+                        formatter: function(v) { return v || '<span class="empty-field">(empty)</span>'; },
+                        search: true
+                    },
+                    { 
+                        name: "tvgName", 
+                        width: 130, 
+                        editable: true,
+                        formatter: function(v) { return v || '<span class="empty-field">(empty)</span>'; },
+                        search: true,
+                        stype: 'select',
+                        searchoptions: {
+                            sopt: ['eq'],
+                            value: ''
+                        }
+                    },
+                    { 
+                        name: "tvgLogo", 
+                        width: 80, 
+                        align: "center",
+                        editable: true,
+                        formatter: function(v, opt, row) {
+                            if (v && v.trim() !== '') {
+                                return '<img src="' + v + '" class="channel-logo" data-rowid="' + row.id + '" onerror="this.style.display=\'none\'">';
+                            }
+                            return '<span class="empty-field">(empty)</span>';
+                        },
+                        unformat: function(cellvalue, options, cell) {
+                            // Return just the URL, not the HTML
+                            var rowData = $grid.jqGrid('getLocalRow', options.rowId);
+                            return rowData.tvgLogo || '';
+                        },
+                        search: false
+                    },
+                    { 
+                        name: "groupTitle", 
+                        width: 130, 
+                        editable: true,
+                        formatter: function(v) { return v || '<span class="empty-field">(empty)</span>'; },
+                        search: true,
+                        stype: 'select',
+                        searchoptions: {
+                            sopt: ['eq'],
+                            value: ''
+                        }
+                    },
+                    { 
+                        name: "channelId", 
+                        width: 100, 
+                        editable: true,
+                        formatter: function(v) { return v || '<span class="empty-field">(empty)</span>'; },
+                        search: true
+                    },
+                    { 
+                        name: "playlist", 
+                        width: 120, 
+                        editable: true,
+                        formatter: function(v) { return v || '<span class="empty-field">(empty)</span>'; },
+                        search: true
+                    },
+                    { 
+                        name: "extgrp", 
+                        width: 100, 
+                        editable: true,
+                        formatter: function(v) { return v || '<span class="empty-field">(empty)</span>'; },
+                        search: true,
+                        stype: 'select',
+                        searchoptions: {
+                            sopt: ['eq'],
+                            value: ''
+                        }
+                    },
+                    { 
+                        name: "album", 
+                        width: 120, 
+                        editable: true,
+                        formatter: function(v) { return v || '<span class="empty-field">(empty)</span>'; },
+                        search: true
+                    },
+                    { 
+                        name: "artist", 
+                        width: 120, 
+                        editable: true,
+                        formatter: function(v) { return v || '<span class="empty-field">(empty)</span>'; },
+                        search: true
+                    },
+                    { 
+                        name: "genre", 
+                        width: 100, 
+                        editable: true,
+                        formatter: function(v) { return v || '<span class="empty-field">(empty)</span>'; },
+                        search: true,
+                        stype: 'select',
+                        searchoptions: {
+                            sopt: ['eq'],
+                            value: ''
+                        }
+                    },
+                    { 
+                        name: "url", 
+                        width: 250, 
+                        editable: true,
+                        edittype: "textarea",
+                        editrules: {required: true},
+                        formatter: function(v) { return v || '<span class="empty-field">(empty)</span>'; },
+                        search: true
+                    },
+                    {
+                        name: "selected",
+                        width: 60,
+                        align: "center",
+                        editable: true,
+                        edittype: "checkbox",
+                        formatter: "checkbox",
+                        formatoptions: {disabled: false},
+                        search: false
+                    }
+                ],
+                cmTemplate: { autoResizable: true },
+                iconSet: "fontAwesome",
+                rowNum: 20,
+                autoResizing: { compact: true },
+                rowList: [10, 20, 50, 100, "10000:All"],
+                viewrecords: true,
+                pager: true,
+                toppager: true,
+                rownumbers: true,
+                sortname: "title",
+                sortorder: "asc",
+                caption: "M3U Playlist Editor - Right-click row to edit, Click logo to play",
+
+         /**/   actionsNavOptions: {      //tarek
+                addUsericon: "fa-user-plus",
+                addUsertitle: "Add user",
+                deleteUsericon: "fa-user-times",
+                deleteUsertitle: "Delete user",
+                addToCarticon: "fa-cart-plus",
+                addToCarttitle: "Add item to the cart",
+                custom: [
+                    { action: "addUser", position: "first", onClick: function (options) { alert("Add user, rowid=" + options.rowid); } },
+                    { action: "addToCart", position: "first", onClick: function (options) { alert("Add to Cart, rowid=" + options.rowid); } },
+                    { action: "deleteUser", onClick: function (options) { alert("Delete user, rowid=" + options.rowid); } }
+                ]
+                },
+
+                height: 'auto',
+                shrinkToFit: false,
+                autowidth: true,
+                onCellSelect: function(rowid, iCol, cellcontent, e) {
+                    // Handle checkbox clicks
+                    var cm = $grid.jqGrid('getGridParam', 'colModel');
+                    if (cm[iCol].name === 'selected') {
+                        var rowData = $grid.jqGrid('getLocalRow', rowid);
+                        rowData.selected = !rowData.selected;
+                        $grid.jqGrid('setCell', rowid, 'selected', rowData.selected);
+                    }
+                },
+                gridComplete: function() {
+                    // Handle logo clicks
+                    $('.channel-logo').off('click').on('click', function(e) {
+                        e.stopPropagation();
+                        var rowid = $(this).data('rowid');
+                        openStreamModal(rowid);
+                    });
+                    
+                    // Handle right-click for edit
+                    $('#list tbody tr.jqgrow').off('contextmenu').on('contextmenu', function(e) {
+                        e.preventDefault();
+                        var rowid = $(this).attr('id');
+                        $grid.jqGrid('editGridRow', rowid, {
+                            closeAfterEdit: true,
+                            reloadAfterSubmit: false,
+                            beforeShowForm: function(form) {
+                                form.closest('.ui-jqdialog').position({
+                                    my: "center",
+                                    at: "center",
+                                    of: window
+                                });
+                            }
+                        });
+                        return false;
+                    });
+                }
+            });
+            
+            // Add filter toolbar
+            $grid.jqGrid('filterToolbar', {
+                stringResult: true,
+                searchOnEnter: false,
+                defaultSearch: "cn"
+            });
+            
+            // Initialize dropdowns
+            setTimeout(function() {
+                updateFilterDropdowns();
+            }, 200);
+            
+            $('#loadSampleBtn').click(loadSampleData);
+            $('#browseBtn').click(browseFile);
+            $('#saveBtn').click(saveData);
+            $('#saveJsonBtn').click(saveAsJSON);
+            $('#fileInput').change(handleFileSelect);
+            
+            $('.stream-close').click(closeStreamModal);
+            $('#streamModal').click(function(e) {
+                if (e.target.id === 'streamModal') {
+                    closeStreamModal();
+                }
+            });
+            
+            $(document).keydown(function(e) {
+                if (e.keyCode === 27) {
+                    closeStreamModal();
+                }
+            });
+        });
+        //]]>
+    </script>
+</head>
+<body>
+    <h2>M3U Playlist Editor - Complete M3U Fields</h2>
+    <p>All M3U standard and IPTV fields displayed - <strong>Right-click any row to edit all fields | Click logo to play stream</strong></p>
+    
+    <div class="filter-hint">
+        <i class="fa fa-filter"></i> <strong>Dropdown Filters:</strong> Select dropdowns appear below headers for: <strong>Title, TVG-Name, Group, ExtGrp, Genre</strong> | Other fields have text search
+    </div>
+    
+    <div class="control-buttons">
+        <button id="loadSampleBtn" class="btn btn-info">
+            <i class="fa fa-database"></i> Load Sample Data
+        </button>
+        <button id="browseBtn" class="btn btn-primary">
+            <i class="fa fa-folder-open"></i> Browse M3U File
+        </button>
+        <button id="saveBtn" class="btn btn-success">
+            <i class="fa fa-save"></i> Save M3U
+        </button>
+        <button id="saveJsonBtn" class="btn btn-warning">
+            <i class="fa fa-download"></i> Export JSON
+        </button>
+    </div>
+    
+    <input type="file" id="fileInput" accept=".m3u,.m3u8" />
+    
+    <div id="status-message"></div>
+    
+    <div id="outerDiv" style="margin:5px;">
+        <table id="list"></table>
+    </div>
+    
+    <!-- Stream Modal -->
+    <div id="streamModal" class="stream-modal">
+        <div class="stream-modal-content">
+            <div class="stream-modal-header">
+                <span class="stream-close">&times;</span>
+                <h3><i class="fa fa-play-circle"></i> Stream Player</h3>
+            </div>
+            <div class="stream-modal-body">
+                <div id="streamPlayerContainer"></div>
+                <div class="stream-info">
+                    <p><strong>Title:</strong> <span id="modalTitle"></span></p>
+                    <p><strong>Group:</strong> <span id="modalGroup"></span></p>
+                    <p><strong>URL:</strong> <span id="modalUrl"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
