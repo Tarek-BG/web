@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Google Sheets Data Editor</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/ui-lightness/jquery-ui.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/free-jqgrid/4.15.5/css/ui.jqgrid.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .ui-jqgrid {
+      font-size: 12px;
+    }
+    .button-container {
+      margin: 15px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+    .status-message {
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .warning {
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    button {
+      padding: 8px 16px;
+      margin: 0 5px;
+      background: #007cba;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005a87;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+    .config {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 4px;
+      margin: 15px 0;
+      border: 1px solid #dee2e6;
+    }
+    .config-section {
+      margin-bottom: 15px;
+    }
+    .config-label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #495057;
+    }
+    .config-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .config-help {
+      font-size: 12px;
+      color: #6c757d;
+      margin-top: 5px;
+    }
+    .user-info {
+      background: #e7f3ff;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+      border-left: 4px solid #007cba;
+    }
+    .sheet-info {
+      background: #e7f3ff;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+      border-left: 4px solid #28a745;
+    }
+    .debug-info {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+      border: 1px dashed #6c757d;
+    }
+    .debug-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #495057;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Google Sheets Data Editor</h1>
+    
+    <div id="userInfo" class="user-info" style="display: none;">
+      <strong>👤 User Information</strong>
+      <div id="userDetails"></div>
+    </div>
+    
+    <div class="config">
+      <h3>🔧 Configuration</h3>
+      
+      <div class="config-section">
+        <label class="config-label" for="webAppUrl">Web App URL:</label>
+        <input type="text" id="webAppUrl" class="config-input" 
+              placeholder="https://script.google.com/macros/s/SCRIPT_ID/exec">
+        <div class="config-help">
+          Get this from: Apps Script → Deploy → Copy Web App URL
+        </div>
+      </div>
+      
+      <div class="config-section">
+        <label class="config-label" for="sheetId">Google Sheet ID:</label>
+        <input type="text" id="sheetId" class="config-input" 
+              placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
+        <div class="config-help">
+          Get this from your Google Sheet URL: docs.google.com/spreadsheets/d/<strong>SHEET_ID</strong>/edit
+        </div>
+      </div>
+      
+      <div class="button-container">
+        <button id="saveConfig">Save Configuration</button>
+        <button id="getUserInfo">Get User Info</button>
+        <button id="testConnection">Test Connection</button>
+        <button id="loadData">Load Data</button>
+      </div>
+      
+      <div id="sheetInfo" class="sheet-info" style="display: none;"></div>
+      
+      <div id="debugInfo" class="debug-info" style="display: none;">
+        <div class="debug-title">🔍 Debug Information</div>
+        <div id="debugDetails"></div>
+      </div>
+    </div>
+    
+    <div class="button-container">
+      <button id="addRow">Add New Row</button>
+      <button id="saveData">Save Changes</button>
+      <button id="reload">Reload Data</button>
+    </div>
+    
+    <div id="statusMessage" class="status-message"></div>
+    
+    <div id="loading" class="loading" style="display: none;">Loading data from Google Sheets...</div>
+    
+    <table id="jqGrid"></table>
+    <div id="jqGridPager"></div>
+
+    <!-- Edit Dialog -->
+    <div id="editDialog" style="display: none;">
+      <form id="editForm">
+        <div id="formFields"></div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/free-jqgrid/4.15.5/js/jquery.jqgrid.min.js"></script>
+
+  <script>
+    $(function() {
+      var grid = $("#jqGrid");
+      var headers = [];
+      var colModel = [];
+      
+      // Configuration management
+      function getConfig() {
+        return {
+          webAppUrl: localStorage.getItem('webAppUrl') || '',
+          sheetId: localStorage.getItem('sheetId') || ''
+        };
+      }
+      
+      function saveConfig(webAppUrl, sheetId) {
+        localStorage.setItem('webAppUrl', webAppUrl);
+        localStorage.setItem('sheetId', sheetId);
+      }
+      
+      function loadConfig() {
+        const config = getConfig();
+        $('#webAppUrl').val(config.webAppUrl);
+        $('#sheetId').val(config.sheetId);
+        return config;
+      }
+      
+      // Initialize configuration
+      loadConfig();
+
+      // Make requests to Google Apps Script
+      function callGoogleScript(action, data = {}) {
+        const config = getConfig();
+        
+        if (!config.webAppUrl) {
+          return Promise.reject(new Error('Please set the Web App URL first'));
+        }
+        
+        const formData = new FormData();
+        formData.append('action', action);
+        
+        // Only add sheetId if we have one (not needed for getUserInfo)
+        if (config.sheetId && action !== 'getUserInfo') {
+          formData.append('sheetId', config.sheetId);
+        }
+        
+        for (const key in data) {
+          if (typeof data[key] === 'object') {
+            formData.append(key, JSON.stringify(data[key]));
+          } else {
+            formData.append(key, data[key]);
+          }
+        }
+
+        console.log('Making request to:', config.webAppUrl, 'Action:', action);
+        
+        return fetch(config.webAppUrl, {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('HTTP error! status: ' + response.status + ' - ' + response.statusText);
+          }
+          return response.json();
+        })
+        .catch(error => {
+          console.error('Fetch error:', error);
+          throw new Error('Network error: ' + error.message + '. Check: 1) Web App URL 2) CORS 3) Authentication');
+        });
+      }
+
+      function getUserInfo() {
+        callGoogleScript('getUserInfo')
+          .then(result => {
+            if (result.success) {
+              displayUserInfo(result);
+              showMessage('User information retrieved', 'success');
+            } else {
+              displayUserInfo(result);
+              showError('Failed to get user info: ' + result.message);
+            }
+          })
+          .catch(error => {
+            showError('Failed to get user info: ' + error.message);
+            displayDebugInfo(error);
+          });
+      }
+
+      function displayUserInfo(userInfo) {
+        $('#userInfo').show();
+        let html = `
+          <div>Email: <strong>${userInfo.userEmail || 'Unknown'}</strong></div>
+          <div>Effective User: <strong>${userInfo.effectiveUser || 'Unknown'}</strong></div>
+        `;
+        
+        if (userInfo.hasSheetAccess !== undefined) {
+          html += `<div>Sheet Access: <strong style="color: ${userInfo.hasSheetAccess ? 'green' : 'red'}">${userInfo.hasSheetAccess ? 'YES' : 'NO'}</strong></div>`;
+        }
+        
+        if (userInfo.sheetName) {
+          html += `<div>Sheet: <strong>${userInfo.sheetName}</strong></div>`;
+        }
+        
+        if (userInfo.accessLevel) {
+          html += `<div>Access Level: <strong>${userInfo.accessLevel}</strong></div>`;
+        }
+        
+        $('#userDetails').html(html);
+      }
+
+      function displayDebugInfo(error) {
+        const config = getConfig();
+        $('#debugInfo').show();
+        $('#debugDetails').html(`
+          <div><strong>Web App URL:</strong> ${config.webAppUrl || 'Not set'}</div>
+          <div><strong>Sheet ID:</strong> ${config.sheetId || 'Not set'}</div>
+          <div><strong>Error:</strong> ${error.message}</div>
+          <div><strong>Possible issues:</strong></div>
+          <ul>
+            <li>Web App URL is incorrect</li>
+            <li>Script not deployed as Web App</li>
+            <li>Authentication required - try opening Web App URL directly in browser</li>
+            <li>No internet connection</li>
+            <li>CORS issues (should be handled by code.gs)</li>
+          </ul>
+        `);
+      }
+
+      function loadData() {
+        const config = getConfig();
+        if (!config.webAppUrl || !config.sheetId) {
+          showError('Please set both Web App URL and Sheet ID first');
+          return;
+        }
+        
+        $('#loading').show();
+        grid.hide();
+        
+        callGoogleScript('getData')
+          .then(result => {
+            if (result.success) {
+              initializeGrid(result);
+              $('#loading').hide();
+              grid.show();
+              showMessage(`Data loaded successfully from "${result.sheetName}"`, 'success');
+            } else {
+              throw new Error(result.message);
+            }
+          })
+          .catch(error => {
+            $('#loading').hide();
+            showError('Failed to load data: ' + error.message);
+            displayDebugInfo(error);
+          });
+      }
+
+      function initializeGrid(result) {
+        headers = result.headers;
+        colModel = [
+          { name: 'id', label: 'ID', width: 50, key: true, hidden: true }
+        ];
+
+        headers.forEach(function(header) {
+          colModel.push({
+            name: header,
+            label: header,
+            width: 150,
+            editable: true,
+            edittype: 'text'
+          });
+        });
+
+        colModel.push({
+          name: 'actions',
+          label: 'Actions',
+          width: 80,
+          sortable: false,
+          formatter: actionsFormatter
+        });
+
+        if (grid.jqGrid('getGridParam', 'reccount') === undefined) {
+          grid.jqGrid({
+            datatype: 'local',
+            data: result.data,
+            colModel: colModel,
+            viewrecords: true,
+            width: '100%',
+            height: 400,
+            rowNum: 20,
+            pager: '#jqGridPager',
+            editurl: 'clientArray'
+          });
+        } else {
+          grid.jqGrid('clearGridData');
+          grid.jqGrid('setGridParam', { data: result.data });
+          grid.trigger('reloadGrid');
+        }
+
+        grid.jqGrid('navGrid', '#jqGridPager', 
+          { edit: false, add: false, del: false, search: false });
+      }
+
+      function actionsFormatter(cellvalue, options, rowObject) {
+        return '<button class="delete-btn" data-id="' + rowObject.id + '">Delete</button>';
+      }
+
+      // Event handlers
+      $('#saveConfig').click(function() {
+        const webAppUrl = $('#webAppUrl').val().trim();
+        const sheetId = $('#sheetId').val().trim();
+        
+        if (!webAppUrl) {
+          showError('Please enter a Web App URL');
+          return;
+        }
+        
+        saveConfig(webAppUrl, sheetId);
+        showMessage('Configuration saved successfully!', 'success');
+        $('#debugInfo').hide();
+      });
+      
+      $('#getUserInfo').click(function() {
+        const webAppUrl = $('#webAppUrl').val().trim();
+        
+        if (!webAppUrl) {
+          showError('Please enter a Web App URL first');
+          return;
+        }
+        
+        saveConfig(webAppUrl, $('#sheetId').val().trim());
+        showMessage('Getting user information...', 'info');
+        getUserInfo();
+      });
+      
+      $('#testConnection').click(function() {
+        const webAppUrl = $('#webAppUrl').val().trim();
+        const sheetId = $('#sheetId').val().trim();
+        
+        if (!webAppUrl || !sheetId) {
+          showError('Please enter both Web App URL and Sheet ID');
+          return;
+        }
+        
+        saveConfig(webAppUrl, sheetId);
+        showMessage('Testing connection...', 'info');
+        
+        callGoogleScript('testConnection')
+          .then(result => {
+            if (result.success) {
+              const sheetInfo = `
+                <strong>✅ Connection Successful!</strong><br>
+                Sheet: <strong>${result.sheetName}</strong><br>
+                User: <strong>${result.userEmail}</strong><br>
+                Rows: ${result.rowCount}, Columns: ${result.columnCount}<br>
+                Access: <strong style="color: green">${result.accessLevel}</strong>
+              `;
+              $('#sheetInfo').html(sheetInfo).show();
+              showMessage('Connection test successful!', 'success');
+              $('#debugInfo').hide();
+            } else {
+              $('#sheetInfo').hide();
+              showError('Connection failed: ' + result.message);
+              displayUserInfo(result);
+            }
+          })
+          .catch(error => {
+            $('#sheetInfo').hide();
+            showError('Connection test failed: ' + error.message);
+            displayDebugInfo(error);
+          });
+      });
+
+      $('#loadData').click(function() {
+        loadData();
+      });
+
+      $('#addRow').click(function() {
+        showEditDialog();
+      });
+
+      $('#saveData').click(function() {
+        saveAllData();
+      });
+
+      $('#reload').click(function() {
+        loadData();
+      });
+
+      $(document).on('click', '.delete-btn', function() {
+        var rowId = $(this).data('id');
+        deleteRow(rowId);
+      });
+
+      grid.on('dblclick', 'tr', function() {
+        var rowId = $(this).attr('id');
+        showEditDialog(rowId);
+      });
+
+      function showEditDialog(rowId) {
+        var formHtml = '';
+        var rowData = {};
+
+        if (rowId) {
+          var row = grid.jqGrid('getRowData', rowId);
+          rowData = row;
+        }
+
+        headers.forEach(function(header) {
+          formHtml += '<div style="margin: 10px 0;">';
+          formHtml += '<label for="' + header + '" style="display: block; margin-bottom: 5px; font-weight: bold;">' + header + ':</label>';
+          formHtml += '<input type="text" id="field_' + header + '" name="' + header + '" value="' + (rowData[header] || '') + '" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">';
+          formHtml += '</div>';
+        });
+
+        $('#formFields').html(formHtml);
+        
+        $('#editDialog').dialog({
+          title: rowId ? 'Edit Row' : 'Add New Row',
+          modal: true,
+          width: 500,
+          buttons: {
+            "Save": function() {
+              saveRowData(rowId);
+              $(this).dialog("close");
+            },
+            "Cancel": function() {
+              $(this).dialog("close");
+            }
+          }
+        });
+      }
+
+      function saveRowData(rowId) {
+        var formData = {};
+        headers.forEach(function(header) {
+          formData[header] = $('#field_' + header).val();
+        });
+
+        if (rowId) {
+          grid.jqGrid('setRowData', rowId, formData);
+          showMessage('Row updated locally. Click "Save Changes" to save to sheet.', 'success');
+        } else {
+          callGoogleScript('addRow', { rowData: formData })
+            .then(result => {
+              if (result.success) {
+                loadData();
+                showMessage(result.message, 'success');
+              } else {
+                showError(result.message);
+              }
+            })
+            .catch(error => {
+              showError('Failed to add row: ' + error.message);
+            });
+        }
+      }
+
+      function saveAllData() {
+        var allRows = grid.jqGrid('getRowData');
+        var rowsToSave = allRows.filter(function(row) {
+          return row.id && row.id !== 'new_row';
+        });
+
+        $('#saveData').prop('disabled', true).text('Saving...');
+        
+        callGoogleScript('saveData', { rows: rowsToSave })
+          .then(result => {
+            $('#saveData').prop('disabled', false).text('Save Changes');
+            if (result.success) {
+              showMessage(result.message, 'success');
+            } else {
+              showError(result.message);
+            }
+          })
+          .catch(error => {
+            $('#saveData').prop('disabled', false).text('Save Changes');
+            showError('Failed to save data: ' + error.message);
+          });
+      }
+
+      function deleteRow(rowId) {
+        if (confirm('Are you sure you want to delete this row?')) {
+          callGoogleScript('deleteRow', { rowId: rowId })
+            .then(result => {
+              if (result.success) {
+                loadData();
+                showMessage(result.message, 'success');
+              } else {
+                showError(result.message);
+              }
+            })
+            .catch(error => {
+              showError('Failed to delete row: ' + error.message);
+            });
+        }
+      }
+
+      function showMessage(message, type) {
+        var statusDiv = $('#statusMessage');
+        statusDiv.removeClass('success error info warning')
+                .addClass(type + ' status-message')
+                .text(message)
+                .show();
+        setTimeout(function() {
+          statusDiv.fadeOut();
+        }, 5000);
+      }
+
+      function showError(error) {
+        showMessage('Error: ' + error, 'error');
+      }
+
+      // Check if we have configuration on load and get user info
+      const config = getConfig();
+      if (config.webAppUrl) {
+        showMessage('Configuration loaded. Click "Get User Info" to check authentication.', 'info');
+        // Auto-get user info if we have URL
+        getUserInfo();
+      } else {
+        showMessage('Please configure your Web App URL and Sheet ID above to get started.', 'warning');
+      }
+    });
+  </script>
+</body>
+</html>
