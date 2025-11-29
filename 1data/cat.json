@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Purrsloud",
+    "species": "Cat",
+    "favFoods": [
+      "wet food",
+      "dry food",
+      "<strong>any</strong> food"
+    ],
+    "birthYear": 2016,
+    "photo": "https://tarek-bg.github.io/web/webtest/template/Handlebars/data/images/cat-2.jpg"
+  },
+  {
+    "name": "Barksalot",
+    "species": "Dog",
+    "birthYear": 2008,
+    "photo": "https://learnwebcode.github.io/json-example/images/dog-1.jpg"
+  },
+  {
+    "name": "BarMymiao02",
+    "species": "Cat",
+    "birthYear": 2008,
+    "photo": "https://tarek-bg.github.io/web/webtest/template/Handlebars/data/images/cat-3.jpg"
+  },
+  {
+    "name": "videos02",
+    "species": "az",
+    "birthYear": 2010,
+    "photo": "https://drive.google.com/file/d/1DjZuDdt1e2FOguppiZZBK4UJhPxJa6yN/view?usp=drive_link"
+  },
+  {
+    "name": "surprise",
+    "species": "ESS",
+    "favFoods": [
+      "tuna",
+      "catnip",
+      "celery"
+    ],
+    "birthYear": 1930,
+    "photo": "https://tarek-bg.github.io/web/webtest/template/Handlebars/data/images/ess-0.jpg"
+  }
+]
