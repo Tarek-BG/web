@@ -48,13 +48,7 @@ block comment on Windows, use Shift + Alt + A
 
 
       <br>
-      <a href="" target="_blank" position="absolute">
-        <img src="https://tarek-bg.github.io/web/3video/myimg01.jpg" alt="Missing file" width="140" height="100">
-      </a>
-
-            <a href="" target="_blank" position="absolute">
-        <img src="https://tarek-bg.github.io/web/3video/myimg02.jpg" alt="Missing file" width="140" height="100">
-      </a>  
+ 
 
     <br>
 
@@ -64,3 +58,11 @@ block comment on Windows, use Shift + Alt + A
       <a href="https://tarek-bg.github.io/web/archi/fethi.webm" target="_blank" position="absolute">
         <img src="https://tarek-bg.github.io/web/archi/piscine.jpg" alt="W3Schools" width="140" height="100">
       </a>
+
+<a href="" target="_blank" position="absolute">
+        <img src="https://tarek-bg.github.io/web/3video/myimg01.jpg" alt="Missing file" width="140" height="100">
+      </a>
+
+<a href="" target="_blank" position="absolute">
+        <img src="https://tarek-bg.github.io/web/3video/myimg02.jpg" alt="Missing file" width="140" height="100">
+      </a>  
