@@ -48,7 +48,7 @@ block comment on Windows, use Shift + Alt + A
 
 
       <br>
-<a href="https://tarek-bg.github.io/web/archi/plan/index" target="_blank" position="absolute">
+<a href="https://tarek-bg.github.io/web/archi/plan/index.html" target="_blank" position="absolute">
 
     <br>
 
