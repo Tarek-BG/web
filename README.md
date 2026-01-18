@@ -63,6 +63,6 @@ block comment on Windows, use Shift + Alt + A
         <img src="https://tarek-bg.github.io/web/3video/myimg01.jpg" alt="Missing file" width="140" height="100">
       </a>
 
-<a href="https://tarek-bg.github.io/web/archi/plan/index" target="_blank" position="absolute">
+<a href="https://tarek-bg.github.io/web/archi/plan/index.html" target="_blank" position="absolute">
         <img src="https://tarek-bg.github.io/web/3video/myimg02.jpg" alt="Missing file" width="140" height="100">
       </a>  
