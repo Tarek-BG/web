@@ -49,11 +49,11 @@ block comment on Windows, use Shift + Alt + A
 
       <br>
       <a href="" target="_blank" position="absolute">
-        <img src="https://drive.google.com/file/d/1U8COuXxPakoF4TI-AKJw8PxQK-dtn0Oc/view?usp=drive_link" alt="Missing file" width="140" height="100">
+        <img src="https://tarek-bg.github.io/web/3video/myimg01.jpg" alt="Missing file" width="140" height="100">
       </a>
 
-            <a href="https://tarek-bg.github.io/web/archi/pdg_prestige2018.pdf" target="_blank" position="absolute">
-        <img src="https://tarek-bg.github.io/web/archi/voile2018.png" alt="Missing file" width="140" height="100">
+            <a href="" target="_blank" position="absolute">
+        <img src="https://tarek-bg.github.io/web/3video/myimg02.jpg" alt="Missing file" width="140" height="100">
       </a>  
 
     <br>
