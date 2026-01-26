@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Peer-to-Peer Video Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a237e 0%, #311b92 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+            background-color: #f44336;
+        }
+        
+        .status-indicator.connected {
+            background-color: #4caf50;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .video-container {
+            flex: 1;
+            min-width: 300px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .video-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #bbdefb;
+        }
+        
+        video {
+            width: 100%;
+            height: 300px;
+            background-color: #000;
+            border-radius: 8px;
+            transform: rotateY(180deg); /* Mirror effect for self-view */
+        }
+        
+        .remote-video {
+            transform: none; /* Don't mirror remote video */
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        h3 {
+            margin-bottom: 15px;
+            color: #bbdefb;
+        }
+        
+        button {
+            background: linear-gradient(to right, #4776E6 0%, #8E54E9 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .button-danger {
+            background: linear-gradient(to right, #FF416C 0%, #FF4B2B 100%);
+        }
+        
+        .button-success {
+            background: linear-gradient(to right, #0ba360 0%, #3cba92 100%);
+        }
+        
+        .connection-info {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .info-box {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: monospace;
+            word-break: break-all;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .instructions {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            video {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>WebRTC Peer-to-Peer Video Chat</h1>
+            <p class="subtitle">First user acts as signaling server for the second user</p>
+            <div id="status" class="status-indicator">Disconnected</div>
+        </header>
+        
+        <div class="app-container">
+            <div class="video-container">
+                <div class="video-title">Your Video</div>
+                <video id="localVideo" autoplay muted playsinline></video>
+            </div>
+            
+            <div class="video-container">
+                <div class="video-title">Remote Video</div>
+                <video id="remoteVideo" autoplay playsinline class="remote-video"></video>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <h3>Media Controls</h3>
+                <button id="startButton">Start Camera</button>
+                <button id="callButton" disabled>Start Call (User 1)</button>
+                <button id="answerButton" disabled>Answer Call (User 2)</button>
+                <button id="hangupButton" disabled class="button-danger">End Call</button>
+            </div>
+            
+            <div class="control-group">
+                <h3>Connection Info</h3>
+                <button id="copyOfferButton" disabled>Copy Offer</button>
+                <button id="pasteAnswerButton" disabled>Paste Answer</button>
+                <p style="margin-top: 10px; font-size: 0.9rem;">
+                    User 1 creates offer → User 2 answers
+                </p>
+            </div>
+        </div>
+        
+        <div class="connection-info">
+            <h3>Connection Data</h3>
+            <div class="info-box">
+                <div id="offerData">No offer data yet...</div>
+            </div>
+            <div style="margin-top: 15px;">
+                <textarea id="answerInput" placeholder="Paste answer SDP here..." rows="3" style="width: 100%; padding: 10px; border-radius: 5px; background-color: rgba(0,0,0,0.5); color: white; border: 1px solid #555;"></textarea>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>How to use this WebRTC application:</h3>
+            <ol>
+                <li><strong>User 1 (Server):</strong> Click "Start Camera" then "Start Call" to create an offer.</li>
+                <li>Copy the offer data from the Connection Data box.</li>
+                <li><strong>User 2 (Client):</strong> Start camera, paste the offer data into the textarea, and click "Answer Call".</li>
+                <li>Copy the answer data that appears and send it back to User 1.</li>
+                <li><strong>User 1:</strong> Paste the answer data into the textarea and click "Paste Answer".</li>
+                <li>The connection will be established and video/audio will start streaming between both users.</li>
+            </ol>
+            <p><strong>Note:</strong> This example uses manual signaling (copy-paste) to simulate a signaling server. In a real app, this would be handled automatically via a WebSocket server.</p>
+        </div>
+        
+        <footer>
+            <p>WebRTC Peer-to-Peer Video Chat Demo | Works in modern browsers (Chrome, Firefox, Edge)</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM elements
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const startButton = document.getElementById('startButton');
+        const callButton = document.getElementById('callButton');
+        const answerButton = document.getElementById('answerButton');
+        const hangupButton = document.getElementById('hangupButton');
+        const copyOfferButton = document.getElementById('copyOfferButton');
+        const pasteAnswerButton = document.getElementById('pasteAnswerButton');
+        const answerInput = document.getElementById('answerInput');
+        const offerData = document.getElementById('offerData');
+        const statusIndicator = document.getElementById('status');
+        
+        // WebRTC variables
+        let localStream;
+        let remoteStream;
+        let peerConnection;
+        
+        // STUN servers for NAT traversal
+        const configuration = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+        
+        // Start the local video stream
+        startButton.addEventListener('click', async () => {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+                
+                localVideo.srcObject = localStream;
+                startButton.disabled = true;
+                callButton.disabled = false;
+                answerButton.disabled = false;
+                
+                updateStatus('Camera active - Ready for call');
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+                alert('Error accessing camera/microphone. Please make sure you have granted permission.');
+            }
+        });
+        
+        // Create offer (User 1 - Server)
+        callButton.addEventListener('click', async () => {
+            callButton.disabled = true;
+            answerButton.disabled = true;
+            createPeerConnection();
+            
+            try {
+                // Add local stream to connection
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
+                
+                // Create offer
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                
+                // Display the offer for manual copying
+                offerData.textContent = JSON.stringify(offer);
+                copyOfferButton.disabled = false;
+                answerInput.disabled = false;
+                pasteAnswerButton.disabled = false;
+                
+                updateStatus('Offer created - Send to User 2');
+            } catch (error) {
+                console.error('Error creating offer:', error);
+                alert('Error creating offer. Please try again.');
+            }
+        });
+        
+        // Answer call (User 2 - Client)
+        answerButton.addEventListener('click', async () => {
+            answerButton.disabled = true;
+            callButton.disabled = true;
+            
+            try {
+                // Parse the offer from the input
+                const offer = JSON.parse(answerInput.value);
+                
+                createPeerConnection();
+                
+                // Add local stream to connection
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
+                
+                // Set remote description (offer from User 1)
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+                
+                // Create answer
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                
+                // Display the answer for manual copying
+                offerData.textContent = JSON.stringify(answer);
+                copyOfferButton.disabled = false;
+                
+                updateStatus('Answer created - Send back to User 1');
+            } catch (error) {
+                console.error('Error processing answer:', error);
+                alert('Error processing offer. Please check the offer data and try again.');
+            }
+        });
+        
+        // Paste answer (User 1 - Server)
+        pasteAnswerButton.addEventListener('click', async () => {
+            try {
+                // Parse the answer from the input
+                const answer = JSON.parse(answerInput.value);
+                
+                // Set remote description (answer from User 2)
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+                
+                copyOfferButton.disabled = true;
+                pasteAnswerButton.disabled = true;
+                hangupButton.disabled = false;
+                
+                updateStatus('Connected - Call in progress');
+            } catch (error) {
+                console.error('Error setting remote description:', error);
+                alert('Error setting answer. Please check the answer data and try again.');
+            }
+        });
+        
+        // End the call
+        hangupButton.addEventListener('click', () => {
+            hangupCall();
+        });
+        
+        // Copy offer to clipboard
+        copyOfferButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(offerData.textContent)
+                .then(() => {
+                    alert('Offer data copied to clipboard!');
+                })
+                .catch(err => {
+                    console.error('Could not copy text: ', err);
+                    alert('Failed to copy to clipboard. Please select and copy manually.');
+                });
+        });
+        
+        // Create peer connection
+        function createPeerConnection() {
+            peerConnection = new RTCPeerConnection(configuration);
+            
+            // Handle remote stream
+            peerConnection.ontrack = (event) => {
+                if (!remoteVideo.srcObject) {
+                    remoteStream = new MediaStream();
+                    remoteVideo.srcObject = remoteStream;
+                }
+                remoteStream.addTrack(event.track);
+            };
+            
+            // Handle ICE candidates
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    // In a real app, you'd send the candidate to the remote peer
+                    console.log('New ICE candidate:', event.candidate);
+                }
+            };
+            
+            // Handle connection state changes
+            peerConnection.oniceconnectionstatechange = () => {
+                if (peerConnection.iceConnectionState === 'disconnected' || 
+                    peerConnection.iceConnectionState === 'failed' ||
+                    peerConnection.iceConnectionState === 'closed') {
+                    hangupCall();
+                }
+            };
+            
+            // Update status when connection is established
+            peerConnection.onconnectionstatechange = () => {
+                if (peerConnection.connectionState === 'connected') {
+                    updateStatus('Connected - Call in progress');
+                }
+            };
+        }
+        
+        // Hang up the call
+        function hangupCall() {
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            
+            if (remoteVideo.srcObject) {
+                remoteVideo.srcObject.getTracks().forEach(track => track.stop());
+                remoteVideo.srcObject = null;
+            }
+            
+            // Reset UI
+            callButton.disabled = false;
+            answerButton.disabled = false;
+            hangupButton.disabled = true;
+            copyOfferButton.disabled = true;
+            pasteAnswerButton.disabled = true;
+            answerInput.value = '';
+            offerData.textContent = 'No offer data yet...';
+            
+            updateStatus('Call ended');
+        }
+        
+        // Update status indicator
+        function updateStatus(statusText) {
+            statusIndicator.textContent = statusText;
+            
+            if (statusText.includes('Connected')) {
+                statusIndicator.classList.add('connected');
+            } else {
+                statusIndicator.classList.remove('connected');
+            }
+        }
+        
+        // Handle page unload
+        window.addEventListener('beforeunload', () => {
+            if (peerConnection) {
+                peerConnection.close();
+            }
+            
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>
