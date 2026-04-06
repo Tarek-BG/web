@@ -1,9 +1,3 @@
-#EXTM3U
-#EXTINF:-1 tvg-id="TF1.fr" tvg-name="TF 1 FR" tvg-logo="https://i.ibb.co/M8GjLmy/TF1.png" group-title="",TF1 Dead Link
-https://tf1-hls-live-ssl.tf1.fr/tf1/1/hls/live.m3u8
-#EXTINF:-1 tvg-id="TF1.fr" tvg-name="TF 1 FR" tvg-logo="https://i.ibb.co/M8GjLmy/TF1.png" group-title="France",TF1 (720P)
-https://tf1-hls-live-ssl.tf1.fr/tf1/1/hls/live_2328.m3u8
-#EXTINF:-1 tvg-id="TF1.fr" tvg-name="TF 1 FR" tvg-logo="https://i.ibb.co/M8GjLmy/TF1.png" group-title="France",TF1 (OPT-2) (576P)
-http://cdn.webtv4.cdnfr.orange.fr/hs/HALO3/hls/tech_tf1_ott_mobile-155120/hls/index.m3u8
-#EXTINF:-1 tvg-id="TF1.fr" tvg-name="TF 1 FR" tvg-logo="https://i.ibb.co/M8GjLmy/TF1.png" group-title="France",TF1
-https://tf1-hls-live-ssl.tf1.fr/tf1/1/hls/live_1328.m3u8
+EXTM3U
+#EXTINF:-1 tvg-id="TF1." tvg-name="TF 1" tvg-logo="https://i.ibb.co/M8GjLmy/TF1.png" group-title="France",TF 1
+https://tf1-hls-live-cdn1.tf1.fr/out/v1/c2e382be3aa2486e8753747e7bb6157e/index.m3u8
