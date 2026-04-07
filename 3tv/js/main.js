@@ -276,7 +276,7 @@ function hideElement( sId, bFade ) {
 }
 
 
-function showModal( sMessage, sError ) {
+ function showModal( sMessage, sError ) {
 	sError = sError || false;
 
 	hideStatus();
@@ -310,15 +310,15 @@ function hideGuide() {
 	bGuideOpened = false;
 	document.body.classList.remove('showguide');
 }
-
-function showControlsGuide( sPlatForm ) {
+                        // tarek hide help start
+/* function showControlsGuide( sPlatForm ) {
 
 	getEl('modal_content').style.width = '70%';
 	getEl('modal_content').style.maxWidth = '1100px';
 	var sGuide = '<h2>' + getLang('guideControlsHeadline') + '</h2><ul class="unordered-list ALIGNLEFT" style="margin-bottom: 0">' + getLang('guideControls') + '</ul>';
 	showModal(sGuide);
 
-}
+} */                // tarek hide help end
 
 
 function showChannelError( sError, sErrorCode ) {
