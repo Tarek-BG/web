@@ -1,17 +1,37 @@
-EXTM3U
-#EXTINF:0 tvg-logo="https://i.ibb.co/Zfcrrr1/lci.png" group-title="|FR|🇫🇷 FRANCE",LCI
-http://artesimulcast.akamaized.net/hls/live/2031003/artelive_fr/index.m3u8
-#EXTINF:0 tvg-logo="https://i.ibb.co/Zfcrrr1/lci.png" group-title="|FR|🇫🇷 FRANCE",LCI
-https://lci-hls-live-cdn1.tf1.fr/out/v1/ab1865540d984279bc8579683bcfcff0/index.m3u8
-#EXTINF:0 tvg-logo="https://i.ibb.co/qY6w8ds/cnews.png" group-title="|FR|🇫🇷 FRANCE",CNEWS
-https://hls-m010.live-lv3.canalplus-cdn.net/live/disk/cnews-clair-hd/ios-v3-hd-clair/cnews-clair-hd.m3u8
-#EXTINF:0 tvg-logo="https://i.ibb.co/BBpR1Wx/tf1.png" user-agent="hls-cdn1" group-title="|FR|🇫🇷 FRANCE",TF1
-https://tf1-hls-live-cdn1.tf1.fr/out/v1/c2e382be3aa2486e8753747e7bb6157e/index.m3u8
-#EXTINF:0 tvg-logo="https://i.ibb.co/hKVyKj4/tmc.png" group-title="|FR|🇫🇷 FRANCE",TMC
-https://tmc-hls-live-cdn1.tf1.fr/out/v1/982927d0b5d24bd58ac42184b10c63d7/index.m3u8
-#EXTINF:0 tvg-logo="https://i.ibb.co/4VS27Jw/tfx.png" group-title="|FR|🇫🇷 FRANCE",TFX
-https://tfx-hls-live-cdn1.tf1.fr/out/v1/818e38d791854222b71a950791fb7002/index.m3u8
-#EXTINF:0 tvg-logo="https://i.ibb.co/9Y4PHKP/tf1sf.png" group-title="|FR|🇫🇷 FRANCE",TF1 SERIES FILMS
-https://tsf-hls-live-cdn1.tf1.fr/out/v1/0326aeefae1a405c9a9732d6f80a66df/index.m3u8
-#EXTINF:-1 tvg-logo="https://i.ibb.co/kckRLh5/bfm.png" group-title="|FR|🇫🇷 INFORMATION",BFM TV
-https://ncdn-live-bfm.pfd.sfr.net/shls/LIVE$BFM_TV/index.m3u8?start=LIVE&end=END
+#EXTM3U
+#EXTINF:-1,= ==== GENERALE = ==== 
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112806
+#EXTINF:-1, FR: TF1 HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112807
+#EXTINF:-1, FR: TF1 +1 HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSpZ/112808
+#EXTINF:-1, FR: TF1 SERIES FILMS HD 
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112810
+#EXTINF:-1, FR: FRANCE 2 HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112812 
+#EXTINF:-1, FR: FRANCE 3 HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112814
+#EXTINF:-1, FR: FRANCE 4 HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112817
+#EXTINF:-1, FR: FRANCE 5 HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112820
+#EXTINF:-1, FR: M6 HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112823
+#EXTINF:-1, FR: 6TER HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112826
+#EXTINF:-1, FR: RTL9 HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112829
+#EXTINF:-1, FR: W9 HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112832
+#EXTINF:-1, FR: TFX HD
+http://ip.xtreme tv.eu:8000/myott/LWGCdfSeHSPZ/112835 
+#EXTINF:-1, FR: TMC HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112838 
+#EXTINF:-1, FR: TMC +1 HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112841
+#EXTINF:-1, FR: 13EME RUE HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSpZ/112844
+#EXTINF:-1, FR: A+ HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112847
+#EXTINF:-1, FR: AB1 HD
+http://ip.xtremetv.eu:8000/myott/LWGCdfSeHSPZ/112850
