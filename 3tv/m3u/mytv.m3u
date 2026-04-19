@@ -1,4 +1,4 @@
-#EXTM3U the!url2use https://iptv-web.app/
+#EXTM3U the!url2use les 2 application https://iptv-web.app/   and   https://www.stream4free.tv/tf1-live-streaming
 #EXTINF:-1 tvg-name="RT Documentary English Ⓖ" tvg-logo="https://i.imgur.com/ZEi1Wgn.png" tvg-id="RTDoc.ru" group-title="Documentaries (EN)",RT Documentary English Ⓖ
 https://rt-rtd.rttv.com/dvr/rtdoc/playlist.m3u8
 #EXTINF:-1 tvg-name="autoⒼ" tvg-logo="http://127.0.0.1:5500/3tv/images/jawhara.png" group-title="RADIO (TN)"  group-logo="http://127.0.0.1:5500/3tv/images/JAWHARA2.png",jawharafm Ⓖ
@@ -9,3 +9,5 @@ https://ldsaaaaaa-timeline-samsungau-awedz.amagi.tv/playlist/ldsAAAAAA-timeline-
 https://sv7.data-stream.top/523659f09865476431a291c19410b862601589ba24b5d90d94be228a82f3dad1/hls/tf3-HD.m3u8
 #EXTINF:-1 tvg-name="autoⒼ"  tvg-logo="http://127.0.0.1:5500/3tv/images/NO LOGO canale.png" tvg-id="  " group-title="TV (FR)"  tvg-logo="http://127.0.0.1:5500/3tv/images/NO LOGO canale.png",M6
 https://sv1.data-stream.top/523659f09865476431a291c19410b862601589ba24b5d90d94be228a82f3dad1/hls/m6france.m3u8
+EXTINF:-1 tvg-name="autoⒼ"  tvg-logo="http://127.0.0.1:5500/3tv/images/NO LOGO canale.png" tvg-id="  " group-title="TV (FR)"  tvg-logo="http://127.0.0.1:5500/3tv/images/NO LOGO canale.png",Simson
+https://sv0.data-stream.top/d21683c422a71b6beeb463601a175b9656680dce00b728ae506800edd01013fe/hls/simpsons.m3u8
