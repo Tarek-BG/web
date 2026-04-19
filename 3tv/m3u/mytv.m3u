@@ -5,5 +5,7 @@ https://rt-rtd.rttv.com/dvr/rtdoc/playlist.m3u8
 http://streaming.toutech.net:1935/live/mp4:jawharafm.sdp/playlist.m3u8
 #EXTINF:-1 tvg-name="autoⒼ"  tvg-logo="http://127.0.0.1:5500/3tv/images/NO LOGO canale.png" tvg-id="RTDoc.ru" group-title="Documentaries (EN)"  tvg-logo="http://127.0.0.1:5500/3tv/images/NO LOGO canale.png",ldsAAAAAA-timeline-samsungau
 https://ldsaaaaaa-timeline-samsungau-awedz.amagi.tv/playlist/ldsAAAAAA-timeline-samsungau/playlist.m3u8
-#EXTINF:-1 tvg-name="autoⒼ"  tvg-logo="http://127.0.0.1:5500/3tv/images/NO LOGO canale.png" tvg-id="RTDoc.ru" group-title="Documentaries (EN)"  tvg-logo="http://127.0.0.1:5500/3tv/images/NO LOGO canale.png",TF1
+#EXTINF:-1 tvg-name="autoⒼ"  tvg-logo="http://127.0.0.1:5500/3tv/images/NO LOGO canale.png" tvg-id="  " group-title="TV (FR)"  tvg-logo="http://127.0.0.1:5500/3tv/images/NO LOGO canale.png",TF1
 https://sv7.data-stream.top/523659f09865476431a291c19410b862601589ba24b5d90d94be228a82f3dad1/hls/tf3-HD.m3u8
+#EXTINF:-1 tvg-name="autoⒼ"  tvg-logo="http://127.0.0.1:5500/3tv/images/NO LOGO canale.png" tvg-id="  " group-title="TV (FR)"  tvg-logo="http://127.0.0.1:5500/3tv/images/NO LOGO canale.png",M6
+https://sv1.data-stream.top/523659f09865476431a291c19410b862601589ba24b5d90d94be228a82f3dad1/hls/m6france.m3u8
