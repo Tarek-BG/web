@@ -1,0 +1,43 @@
+name: Deploy LFS Site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # Change this to your default development branch
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Check out the repository and explicitly download LFS files
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true # Enables Git LFS file downloading
+
+      # 2. Set up GitHub Pages infrastructure
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      # 3. Upload your static files (e.g., your root folder or build directory)
+      - name: Upload Artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.' # Change to 'dist' or 'build' if your site requires compilation
+
+      # 4. Deploy the extracted binaries to the live web server
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
