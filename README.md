@@ -21,7 +21,7 @@ block comment on Windows, use Shift + Alt + A
 
 <br>
       <a href="https://tarek-bg.github.io/web/archi/plan/piscinepek.glb" target="_blank" position="absolute">
-        <img src="https://tarek-bg.github.io/web/archi/plage.jpg" alt="W3Schools" width="140" height="100">
+        <img src="https://tarek-bg.github.io/web/archi/pisc2026.png" alt="W3Schools" width="140" height="100">
       </a>
 
 
