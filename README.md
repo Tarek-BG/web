@@ -19,7 +19,8 @@ block comment on Windows, use Shift + Alt + A
 <br>
       <a href="https://tarek-bg.github.io/web/archi/plan/iconHasdrubalV2_15p.gif" target="https://tarek-bg.github.io/web/archi/plan/index.html" position="absolute">
 
-
+<br>
+      <a href="https://tarek-bg.github.io/web/archi/plan/piscinepek.glb" target="_blank" position="absolute">
 
 <br><a href="https://tarek-bg.github.io/web/archi/HAM052024.zip" download>Download les Pages</a>
 <br>
